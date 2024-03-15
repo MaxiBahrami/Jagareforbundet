@@ -8,6 +8,7 @@ export const AuthContextProvider = ({children})=>{
 
   const login = async (inputs) => {
     try {
+        axios.defaults.withCredentials = true;
       const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, inputs);
       if (res.data) {
         // Assuming the response contains user data
