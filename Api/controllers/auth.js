@@ -55,7 +55,7 @@ export const login = (req, res) => {
 
     res
       .cookie("access_token", token, {
-        httpOnly: true,
+        httpOnly: false,
         sameSite: "none",
         secure: true
       })
