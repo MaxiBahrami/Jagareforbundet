@@ -56,6 +56,7 @@ export const login = (req, res) => {
     res
       .cookie("access_token", token, {
         httpOnly: true,
+        sameSite: "None",
       })
       .status(200)
       .json(other);
