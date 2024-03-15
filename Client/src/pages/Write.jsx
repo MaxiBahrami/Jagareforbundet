@@ -38,7 +38,19 @@ const Write = () => {
             cat,
             img: imgUrl,
             date: moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
-          });
+          },
+
+
+                              {
+            headers: {
+              "Content-Type": "application/json", // Example: Content-Type header
+              "Access-Control-Allow-Credentials": true
+            },
+            withCredentials: true, // Include credentials (cookies) in the request
+          }
+
+                           
+                          );
           navigate("/")
     } catch (err) {
       console.log(err);
