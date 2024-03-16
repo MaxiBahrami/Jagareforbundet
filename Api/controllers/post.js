@@ -1,8 +1,8 @@
 import { db } from "../db.js";
 import jwt from "jsonwebtoken";
-import util from "util";
+// import util from "util";
 
-const queryAsync = util.promisify(db.query).bind(db);
+// const queryAsync = util.promisify(db.query).bind(db);
 
 export const getPosts = (req, res) => {
   const q = req.query.cat
@@ -29,12 +29,7 @@ export const getPost = (req, res) => {
 };
 
 export const addPost = async (req, res) => {
-  const token = req.cookies.access_token ;
-  if(!token) return res.status(401).json("Ej autentiserad!");
-
-  jwt.verify(token,"jwtkey", (err, userInfo)=>{
-    if(err) return res.status(403).json("Token är ogiltig!");
-
+  try {
     const q = "INSERT INTO posts(`title`, `desc`, `text`, `img`, `cat`, `date`,`uid`) VALUES (?)";
 
     const values = [
@@ -44,49 +39,43 @@ export const addPost = async (req, res) => {
       req.body.img,
       req.body.cat,
       req.body.date,
-      userInfo.id,
+      req.userInfo.id, // Access user information from req.userInfo
     ];
 
-    db.query(q, [values], (err,data)=>{
-      if(err) return res.status(500).send(err);
-      return res.json("Inlägget har uppdaterats")
-    });
-  });
+    await db.query(q, [values]);
+
+    return res.status(201).json("Inlägget har uppdaterats");
+  } catch (error) {
+    console.error("Error adding post:", error);
+    return res.status(500).json(error.message);
+  }
 };
 
-export const deletePost = (req, res) => {
-  const token = req.cookies.access_token;
-  if (!token) return res.status(401).json("Ej autentiserad!");
-
-  jwt.verify(token, "jwtkey", (err, userInfo) => {
-    if (err) return res.status(403).json("Token är ogiltig!");
-
+export const deletePost = async (req, res) => {
+  try {
     const postId = req.params.id;
+    const userInfo = req.userInfo; // Access user information from req.userInfo
+
     const q = "DELETE FROM posts WHERE `id` = ? AND `uid` = ?";
+    const result = await db.query(q, [postId, userInfo.id]);
 
-    db.query(
-      q,
-      [postId, userInfo.id],
-      (err,
-      (data) => {
-        if (err)
-          return res.status(403).json("Du kan ta bort endast ditt inlägg!");
+    if (result.affectedRows === 0) {
+      return res.status(403).json("Du kan ta bort endast ditt inlägg!");
+    }
 
-        return res.json("Inlägg har raderats!");
-      })
-    );
-  });
+    return res.json("Inlägg har raderats!");
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    return res.status(500).json(error.message);
+  }
 };
 
-export const updatePost = (req, res) => {
-  const token = req.cookies.access_token ;
-  if(!token) return res.status(401).json("Ej autentiserad!");
-
-  jwt.verify(token,"jwtkey", (err, userInfo)=>{
-    if(err) return res.status(403).json("Token är ogiltig!");
-
+export const updatePost = async (req, res) => {
+  try {
     const postId = req.params.id;
-    const q = "UPDATE posts SET `title`=?, `desc`=?,`text`=?, `img`=?, `cat`=? WHERE `id` = ? AND `uid` = ?"
+    const userInfo = req.userInfo; // Access user information from req.userInfo
+
+    const q = "UPDATE posts SET `title`=?, `desc`=?,`text`=?, `img`=?, `cat`=? WHERE `id` = ? AND `uid` = ?";
 
     const values = [
       req.body.title,
@@ -94,12 +83,19 @@ export const updatePost = (req, res) => {
       req.body.text,
       req.body.img,
       req.body.cat,
-    ]
+    ];
+
     console.log("Update Post Values:", values);
-    db.query(q, [...values,postId,userInfo.id], (err,data)=>{
-      if(err) return res.status(500).send(err);
-      return res.json("Inlägget har uppdaterats")
-      
-    })
-  })
+
+    const result = await db.query(q, [...values, postId, userInfo.id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(403).json("Du kan uppdatera endast ditt inlägg!");
+    }
+
+    return res.json("Inlägget har uppdaterats");
+  } catch (error) {
+    console.error("Error updating post:", error);
+    return res.status(500).json(error.message);
+  }
 };
