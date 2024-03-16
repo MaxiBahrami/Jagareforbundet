@@ -55,12 +55,10 @@ export const login = (req, res) => {
 
     res
       .cookie("access_token", token, {
-        httpOnly: false,
-        sameSite: "none",
-        secure: true
+        httpOnly: true,
       })
       .status(200)
-      .json(other);
+      .json({ token, ...other });// Include token along with other user data
   });
 };
 
